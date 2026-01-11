@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USD → VND</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007aff">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 12px;
+    font-family: system-ui, -apple-system, Arial, sans-serif;
+    background: #f2f2f2;
+}
+
+.container {
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    max-width: 420px;
+    margin: auto;
+}
+
+h1 {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 14px;
+}
+
+label {
+    font-size: 14px;
+    font-weight: 600;
+    display: block;
+    margin-top: 12px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin-top: 6px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+button {
+    width: 100%;
+    margin-top: 18px;
+    padding: 16px;
+    font-size: 20px;
+    border: none;
+    border-radius: 12px;
+    background: #007aff;
+    color: #fff;
+}
+
+.result {
+    margin-top: 18px;
+    padding: 14px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.good { color: #1a8f2d; font-weight: 700; }
+.bad { color: #c62828; font-weight: 700; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>USD → VND</h1>
+
+    <label>Сумма USD</label>
+    <input id="usd" type="number" inputmode="decimal">
+
+    <label>Курс банка (VND за 1 USD)</label>
+    <input id="bank" type="number" inputmode="decimal">
+
+    <label>Курс обменника (VND за 1 USD)</label>
+    <input id="exchange" type="number" inputmode="decimal">
+
+    <button onclick="calc()">Рассчитать</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+const usdInput = document.getElementById("usd");
+const bankInput = document.getElementById("bank");
+const exchangeInput = document.getElementById("exchange");
+const result = document.getElementById("result");
+
+/* ---------- ВОССТАНОВЛЕНИЕ ДАННЫХ ---------- */
+usdInput.value = localStorage.getItem("usd") || "1000";
+bankInput.value = localStorage.getItem("bank") || "";
+exchangeInput.value = localStorage.getItem("exchange") || "";
+
+/* ---------- СОХРАНЕНИЕ ПРИ ВВОДЕ ---------- */
+[usdInput, bankInput, exchangeInput].forEach(input => {
+    input.addEventListener("input", () => {
+        localStorage.setItem("usd", usdInput.value);
+        localStorage.setItem("bank", bankInput.value);
+        localStorage.setItem("exchange", exchangeInput.value);
+    });
+});
+
+/* ---------- РАСЧЁТ ---------- */
+function calc() {
+    const usd = +usdInput.value;
+    const bank = +bankInput.value;
+    const exchange = +exchangeInput.value;
+
+    if (!usd || !bank || !exchange) {
+        alert("Заполни все поля");
+        return;
+    }
+
+    const vndBank = usd * bank;
+    const vndExchange = usd * exchange;
+
+    const diffVnd = vndExchange - vndBank;
+    const diffUsd = diffVnd / bank;
+    const diffPercent = (diffVnd / vndBank) * 100;
+
+    const cls = diffVnd >= 0 ? "good" : "bad";
+    const label = diffVnd >= 0 ? "Обменник выгоднее" : "Банк выгоднее";
+
+    result.innerHTML = `
+        <b>Банк:</b><br>
+        ${vndBank.toLocaleString()} VND<br><br>
+
+        <b>Обменник:</b><br>
+        ${vndExchange.toLocaleString()} VND<br><br>
+
+        <b>${label}:</b><br>
+        <span class="${cls}">
+            ${diffVnd.toLocaleString()} VND<br>
+            ${diffUsd.toFixed(2)} USD<br>
+            ${diffPercent.toFixed(2)} %
+        </span>
+    `;
+}
+
+/* ---------- SERVICE WORKER ---------- */
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+}
+</script>
+
+</body>
+</html>
